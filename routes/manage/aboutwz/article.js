@@ -48,7 +48,17 @@ router.get('/look',function(req,res){
 		res.send(data);
 	})
 })
-
+router.get("/editData",function(req,res,next){
+    var getId=req.query.id;    //获取前端发送的文章id
+   // 通过文章id获取数据
+	detailMod.findById({"_id":getId},function(err,data){
+        if(err){
+            throw err;
+        }else{
+			res.send(data);
+		}
+    })
+})
 
 // 匹配模式，点击导航获取对应值
 router.get('/type/:id',function(req,res){
