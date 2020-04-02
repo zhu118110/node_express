@@ -65,7 +65,6 @@ router.get("/isShow",function(req,res){
 
 router.get("/replyPl",function(req,res){
     let replyBox=[];
-    console.log(req.baseUrl)
     cmdModel.find( {"reply":true},function(err,data){
         
         if(err) throw err;

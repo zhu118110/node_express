@@ -49,87 +49,58 @@ router.get("/getpl",function(req,res){
     // 2.遍历 idArr ,根据id去评论库查找对应的内容data,它是一个数组
     // 3.遍历 data ,进行删除,删除成功后返回的对象放到 scss 数组中
     // 4.比较 scss 和 idArr 数组的长度,如果长度相同则表示全部删除,给前端返回状态码1;
-router.get('/delpl',function(req,res){
-    let idArr=req.query.plArr;
-    let scss=[];
-    // 1.
-    if(idArr.length>0){
-       
-        for (let i in idArr){
-             // 2.
-             cmdModel.find({"_id":idArr[i]},function(err,commentData){
-                if(err) throw err;
-                // 3. 
-               
-                for(let j in commentData){
-                    commentData[j].remove(function(err,result){
-                        if(err){
-                            return err;
-                        }else{
+router.get("/delpl",function(req,res){
+    
+    let idArr=req.query.idArr;
+    let cmdData=[];  //评论的数据
 
-                            replyModel.find({"titleId":commentData[j].titleId},function(err,replyData){
-                                for(let k in replyData){
-                                    replyData[k].remove(function(err,success){
-                                        if(err){
-                                            return err;
-                                        }else{
-                                            scss.push(result);
-                                            if(scss.length==idArr.length){
-                                                res.send('1')
-                                            }
-                                        }
-                                    })
-                                }
-                            })
-
-                        }
-                    })
-                }
-                
-            })
-
-
-        }
-       
+    for(var i=0;i<idArr.length;i++){
+        cmdModel.findByIdAndRemove({"_id":idArr[i]},function(err,data){
+            if(err){
+                throw err
+            }else{
+                // 保存删除的评论
+                cmdData.push(data);
+                // 如果已经删除掉的评论数量==选中的评论数量,给前端返回1
+                if(cmdData.length==idArr.length){
+                    res.send("1");
+                }      
+            }
+        })
     }
+})
 
-
-
-
-
-
-
-
-
-    // router.get('/delpl',function(req,res){
-    //     let idArr=req.query.plArr;
-    //     let scss=[];
-    //     // 1.
-    //     if(idArr.length>0){
-           
-    //         for (let i in idArr){
-    //              // 2.
-    //              cmdModel.find({"_id":idArr[i]},function(err,data){
-    //                 if(err) throw err;
-    //                 // 3. 
-    //                 for(let j in data){
+// 删除回复
+router.get("/delhf",function(req,res){
+    let idArr=req.query.idArr;
+    let replyData=[];  //回复的数据
+    let dataLength=0;
+    for(let i in idArr){
+        replyModel.find({"commentId":idArr[i]},function(err,data){
+            
+            if(data.length>0){
+                dataLength+=data.length;
+                if(err){
+                    throw err;
+                }else{
+                    for(let j in data){
+                        data[j].remove(function(err,success){
+                            replyData.push(success);
+                            if(dataLength==replyData.length){
+                                res.send("1")
+                            }
+                        })
+                    }
+                    
+                }
+            }else{
+                res.send("0")
+            }
+            
+        })
+    }
+   
     
-    //                     data[j].remove(function(err,result){
-    //                         if(err) throw err;
-    //                         scss.push(result);
-    //                         // 4.
-    //                         if(scss.length==idArr.length){
-    //                             res.send('1')
-    //                         }
-    //                     })
-    
-    //                 }
-                  
-    //             })
-    
-    //         }
-           
-    //     }
 })
 
 
