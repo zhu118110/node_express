@@ -20,7 +20,7 @@ router.all('*', function(req, res, next) {
 router.get("/details",function(req,res,next){
     var getId=req.query.id;    //获取前端发送的文章id
     var readDate=req.query.readDate?req.query.readDate.split(" ")[0]:"";   //获取进去详情页面的日期,只要年月日
-
+    var kind="";
     let readNum=0;
    // 通过文章id获取数据
 	detailMod.findById({"_id":getId},function(err,data){
@@ -29,6 +29,7 @@ router.get("/details",function(req,res,next){
         }else{
               //更新文章的阅读数量
             readNum+=data.reading;
+            kind=data.kind;
             detailMod.findByIdAndUpdate(getId,{"reading":readNum+=1},function(err,doc){
                 if(err){
                     return;
@@ -38,7 +39,8 @@ router.get("/details",function(req,res,next){
                         let pandect=new pandectModel({
                             "readDate":readDate,
                             "articleId":getId,
-                            "readSum":1
+                            "readSum":1,
+                            "kind":kind
                         })
                         pandect.save(function(err){
                             if(err) throw err;

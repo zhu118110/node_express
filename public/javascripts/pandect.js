@@ -9,7 +9,8 @@ var schema=new model.Schema({
         type:Number,
         default:0
     },    //查看数
-    "articleId":String   //文章ID
+    "articleId":String,   //文章ID,
+    "kind":String    //文章种类
 });
 var pandectModel=model.model("pandect",schema,"pandect");
 module.exports=pandectModel;

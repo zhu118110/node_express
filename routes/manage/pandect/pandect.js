@@ -39,6 +39,7 @@ router.get("/getVisited",function(req,res){
 	let today=req.query.today;
 	pandectModel.find({},function(err,data){
 		if(err) throw err;
+		console.log(data);
 		res.send(data)
 	})
 })
