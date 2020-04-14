@@ -63,7 +63,7 @@ router.get("/delpl",function(req,res){
                 cmdData.push(data);
                 // 如果已经删除掉的评论数量==选中的评论数量,给前端返回1
                 if(cmdData.length==idArr.length){
-                    res.send("1");
+                   return res.send("1");
                 }      
             }
         })
@@ -75,32 +75,43 @@ router.get("/delhf",function(req,res){
     let idArr=req.query.idArr;
     let replyData=[];  //回复的数据
     let dataLength=0;
-    for(let i in idArr){
-        replyModel.find({"commentId":idArr[i]},function(err,data){
-            
-            if(data.length>0){
-                dataLength+=data.length;
-                if(err){
-                    throw err;
-                }else{
-                    for(let j in data){
-                        data[j].remove(function(err,success){
-                            replyData.push(success);
-                            if(dataLength==replyData.length){
-                                res.send("1")
-                            }
-                        })
-                    }
+    let flag=false;
+    (async function(){
+        await new Promise((resolve, reject) => {
+
+            for(let i in idArr){
+                replyModel.find({"commentId":idArr[i]},function(err,data){
                     
-                }
-            }else{
-                res.send("0")
+                    if(data.length>0){
+                        dataLength+=data.length;
+                        if(err){
+                            throw err;
+                        }else{
+                            for(let j in data){
+                                data[j].remove(function(err,success){
+                                    replyData.push(success);
+                                    if(dataLength==replyData.length){
+                                    res.send("1");
+                                    }
+                                })
+                            }
+                            
+                        }
+                    }else{
+                        
+                        resolve(flag=true)
+                        // console.log('1', flag);
+                       
+                    }
+                })
             }
-            
-        })
-    }
-   
-    
+            })
+            // console.log('2', flag);
+            if(flag==true){
+                res.send("0");
+            }
+        
+    })()
 })
 
 

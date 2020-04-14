@@ -48,10 +48,11 @@ router.get('/look',function(req,res){
 		res.send(data);
 	})
 })
+
 router.get("/editData",function(req,res,next){
     var getId=req.query.id;    //获取前端发送的文章id
    // 通过文章id获取数据
-	detailMod.findById({"_id":getId},function(err,data){
+   model.findById({"_id":getId},function(err,data){
         if(err){
             throw err;
         }else{
