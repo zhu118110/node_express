@@ -1,0 +1,8 @@
+*****这是利用node搭建的服务端，利用express与前端进行交互。*****
+
+这是vue项目的服务端代码。主要的为app.js、public文件夹、routes夹。
+---app.js是对routes文件夹下的文件引入以及声明，设置服务端端口号 。
+---public文件夹是mongoose对mongodb数据库内的集合进行连接以及设置文档字段。
+---routes文件夹实现接口功能；是使用express的路由处理前端请求的数据以及对数据库文档的增删改查操作。
+
+vue前端代码请移步vueProject中查看；
