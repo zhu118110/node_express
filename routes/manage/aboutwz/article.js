@@ -15,7 +15,7 @@ router.all('*', function(req, res, next) {
 	res.header('Access-Control-Allow-Credentials', true);
     res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
     res.header("X-Powered-By",' 3.2.1')
-    res.header("Content-Type", "application/json;charset=utf-8");
+    res.header("Content-Type","application/json;charset=utf-8");
     next();
 });
 
@@ -57,16 +57,20 @@ router.get("/editData",function(req,res,next){
             throw err;
         }else{
 			res.send(data);
+			
 		}
     })
 })
 
 // 匹配模式，点击导航获取对应值
-router.get('/type/:id',function(req,res){
+router.post('/type/:id',function(req,res){
 	let typeId=req.params.id;
+	let jsonData={};
 	model.find({"kind":typeId},function(err,data){
 		if(err) throw err;
 		res.send(data);
+	   
+		// res.json(data);
 	})
 })
 
