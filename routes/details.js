@@ -18,15 +18,21 @@ router.all('*', function(req, res, next) {
 // 客户端页面点击标题查看文章详情    
 // 通过前端传来的文章id进行查找
 router.get("/details",function(req,res,next){
+  
     var getId=req.query.id;    //获取前端发送的文章id
     var readDate=req.query.readDate?req.query.readDate.split(" ")[0]:"";   //获取进去详情页面的日期,只要年月日
     var kind="";
     let readNum=0;
    // 通过文章id获取数据
+   
 	detailMod.findById({"_id":getId},function(err,data){
         if(err){
             throw err;
         }else{
+            if(!data){
+                res.send("0");
+                return false;
+            }
               //更新文章的阅读数量
             readNum+=data.reading;
             kind=data.kind;

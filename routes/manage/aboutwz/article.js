@@ -1,6 +1,7 @@
 
 var express=require("express");
 var router=express.Router();
+var multiparty=require('multiparty');
 var fs=require("fs");
 var formidable = require('formidable');
 
@@ -14,14 +15,44 @@ router.all('*', function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
 	res.header('Access-Control-Allow-Credentials', true);
     res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
-    res.header("X-Powered-By",' 3.2.1')
+	res.header("X-Powered-By",' 3.2.1');
+	// res.header("Content-Type","text/plain");
     res.header("Content-Type","application/json;charset=utf-8");
     next();
 });
 
-
+// 接收图片
+router.post('/getImg',function(req,res){
+	var newPath;
+	var form = new formidable.IncomingForm();
+	form.uploadDir = "img/"; //临时目录
+	form.parse(req, function(error, fields, files) {
+		var imgInfor="";
+		imgInfor=files.img;
+		var name=imgInfor.name;   //图片名称
+		var read=fs.createReadStream(imgInfor.path);  //读取默认目录下的图片
+		newPath='/uploadImg/'+name;   //创建保存图片的新的文件
+		var write=fs.createWriteStream("public/"+newPath);   //写入路径
+		read.pipe(write); 
+		// 写入完成
+		write.on('close',function (err) { 
+			if(err){
+				throw err;
+			}else{
+				res.json({
+					"errno ":0,
+					"data":[
+						newPath
+					]
+				})
+			}
+		 })
+	})
+	
+})
 //增: 往数据库存储后台页面发布的文章信息
 router.post('/getAdd',function(req,res){
+	
 	let enity=new model();  
 	enity.title=req.body.title;
 	enity.content=req.body.content;
@@ -37,6 +68,7 @@ router.post('/getAdd',function(req,res){
 			res.send("1");
 		}
 	});
+	
 })
 
 

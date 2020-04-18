@@ -4,6 +4,7 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
+
 var details=require('./routes/details');   //前台点击标题进入的详情页
 var comment=require('./routes/comment');   //详情页发表评论
 var login=require('./routes/login');  //前台登陆页面

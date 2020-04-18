@@ -18,7 +18,9 @@ router.all('*', function(req, res, next) {
 router.post('/login',function(req,res){
 	var post=req.body;    //获取前端通过post方式传过来的账号、密码
 	login.find({},function(err,data){
-		if(err) throw err;
+		if(err){
+			router.direct("/")
+		};
 		if(data[0].act==post.act&&data[0].psw==post.psw){
 			res.send("1")
 		}else{
