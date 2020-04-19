@@ -30,7 +30,9 @@ router.post('/getImg',function(req,res){
 	form.parse(req, function(error, fields, files) {
 		var imgInfor="";
 		imgInfor=files.img;
-		
+		switch(imgInfor.type){
+			case "image\jpeg"
+		}
 		var name=parseInt( new Date()/100+Math.round( Math.random()*100));   //定义随机图片名称,防止粘贴上来的图片名称一样
 		var read=fs.createReadStream(imgInfor.path);  //读取默认目录下的图片
 		newPath='/uploadImg/'+name;   //创建保存图片的新的文件
