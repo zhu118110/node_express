@@ -23,13 +23,15 @@ router.all('*', function(req, res, next) {
 
 // 接收图片
 router.post('/getImg',function(req,res){
+	
 	var newPath;
 	var form = new formidable.IncomingForm();
 	form.uploadDir = "img/"; //临时目录
 	form.parse(req, function(error, fields, files) {
 		var imgInfor="";
 		imgInfor=files.img;
-		var name=imgInfor.name;   //图片名称
+		
+		var name=parseInt( new Date()/100+Math.round( Math.random()*100));   //定义随机图片名称,防止粘贴上来的图片名称一样
 		var read=fs.createReadStream(imgInfor.path);  //读取默认目录下的图片
 		newPath='/uploadImg/'+name;   //创建保存图片的新的文件
 		var write=fs.createWriteStream("public/"+newPath);   //写入路径
@@ -81,6 +83,7 @@ router.get('/look',function(req,res){
 	})
 })
 
+// 获取要进行编辑的数据
 router.get("/editData",function(req,res,next){
     var getId=req.query.id;    //获取前端发送的文章id
    // 通过文章id获取数据
@@ -94,9 +97,10 @@ router.get("/editData",function(req,res,next){
     })
 })
 
-// 匹配模式，点击导航获取对应值
+// 匹配模式，点击每个导航获取对应值
 router.post('/type/:id',function(req,res){
 	let typeId=req.params.id;
+	console.log(typeId);
 	let jsonData={};
 	model.find({"kind":typeId},function(err,data){
 		if(err) throw err;
