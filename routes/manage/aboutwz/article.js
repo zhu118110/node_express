@@ -26,44 +26,74 @@ router.post('/getImg',function(req,res){
 	
 	var newPath;
 	var form = new formidable.IncomingForm();
-	form.uploadDir = "img/"; //临时目录
+	form.uploadDir = "public/temp"; //设置临时目录
+	form.keepExtensions = true;   //保存图片后缀名，默认不保存
+
+	var myPath=null;
+	// 在post流中检测到任意一个新的文件便会触发该事件
+	// 参数file数组，包含文件名，后缀，存放的临时文件夹
+	// 参数name字符串，文件名称
+	form.on('fileBegin', function(name, file) {
+		// console.log("检测到字符串")
+	}); 
+	// 每当有一对字段/文件已经接收到，便会触发该事件
+	form.on('file', function(name, file) {
+		// console.log(file.path)
+		// myPath=file.path
+	}); 
+	form.on('end', function() {
+		
+	});
+
+	// 该方法会转换请求中所包含的表单数据，回调包含所有字段域和文件信息，必须写此方法，否则不接收数据
 	form.parse(req, function(error, fields, files) {
-		var imgInfor="";
+			var imgInfor="";
 		imgInfor=files.img;
-		
-		var name=parseInt( new Date()/100+Math.round( Math.random()*100));   //定义随机图片名称,防止粘贴上来的图片名称一样
-		// 判断图片后缀名
-		
-		switch(imgInfor.type){
-			case "image/jpeg":
-				name+=".jpg"
-			break;
-			case "image/jpg":
-				name+=".jpg"
-			break;
-			case "image/png":
-				name+=".png"
-			break;
-		}
-		console.log(name);
-		var read=fs.createReadStream(imgInfor.path);  //读取默认目录下的图片
-		newPath='/uploadImg/'+name;   //创建保存图片的新的文件
-		var write=fs.createWriteStream("public/"+newPath);   //写入路径
-		read.pipe(write); 
-		// 写入完成
-		write.on('close',function (err) { 
-			if(err){
-				throw err;
-			}else{
-				res.json({
-					"errno ":0,
-					"data":[
-						newPath
-					]
-				})
-			}
-		 })
+		console.log(imgInfor.path)
+		res.json({
+				"errno ":0,
+				"data":[
+					imgInfor.path
+				]
+			})
 	})
+		
+	// 	var imgInfor="";
+	// 	imgInfor=files.img;
+		
+	// 	var name=parseInt( new Date()/100+Math.round( Math.random()*100));   //定义随机图片名称,防止粘贴上来的图片名称一样
+	// 	// 判断图片后缀名
+		
+	// 	switch(imgInfor.type){
+	// 		case "image/jpeg":
+	// 			name+=".jpg"
+	// 		break;
+	// 		case "image/jpg":
+	// 			name+=".jpg"
+	// 		break;
+	// 		case "image/png":
+	// 			name+=".png"
+	// 		break;
+	// 	}
+	// 	console.log(name);
+	// 	var read=fs.createReadStream(imgInfor.path);  //读取默认目录下的图片
+	// 	newPath='/uploadImg/'+name;   //创建保存图片的新的文件
+	// 	var write=fs.createWriteStream("public/"+newPath);   //写入路径
+	// 	read.pipe(write); 
+	// 	// 写入完成
+	// 	write.on('close',function (err) { 
+	// 		if(err){
+	// 			throw err;
+	// 		}else{
+	// 			res.json({
+	// 				"errno ":0,
+	// 				"data":[
+	// 					newPath
+	// 				]
+	// 			})
+	// 		}
+	// 	 })
+	// })
 	
 })
 //增: 往数据库存储后台页面发布的文章信息
