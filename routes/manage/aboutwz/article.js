@@ -21,6 +21,8 @@ router.all('*', function(req, res, next) {
     next();
 });
 
+
+var imgNumber=0;
 // 接收图片
 router.post('/getImg',function(req,res){
 	
@@ -28,93 +30,95 @@ router.post('/getImg',function(req,res){
 	var form = new formidable.IncomingForm();
 	form.uploadDir = "public/temp"; //设置临时目录
 	form.keepExtensions = true;   //保存图片后缀名，默认不保存
-
-	var myPath=null;
-	// 在post流中检测到任意一个新的文件便会触发该事件
-	// 参数file数组，包含文件名，后缀，存放的临时文件夹
-	// 参数name字符串，文件名称
-	form.on('fileBegin', function(name, file) {
-		// console.log("检测到字符串")
-	}); 
 	// 每当有一对字段/文件已经接收到，便会触发该事件
 	form.on('file', function(name, file) {
-		// console.log(file.path)
-		// myPath=file.path
+		imgNumber+=1;
+		console.log("接收到文件"+imgNumber+"个")
 	}); 
-	form.on('end', function() {
-		
-	});
-
-	// 该方法会转换请求中所包含的表单数据，回调包含所有字段域和文件信息，必须写此方法，否则不接收数据
+	
+	// 该方法会转换请求中所包含的表单数据，回调包含所有字段域和文件信息。必须写此方法，否则不接收数据
 	form.parse(req, function(error, fields, files) {
-			var imgInfor="";
+		var imgInfor="";
 		imgInfor=files.img;
-		console.log(imgInfor.path)
+		// 将图片的临时文件路径返回给前端
 		res.json({
-				"errno ":0,
-				"data":[
-					imgInfor.path
-				]
-			})
+			"errno ":0,
+			"data":[
+				imgInfor.path     // public\temp\图片名.jpg
+			]
+		})
 	})
-		
-	// 	var imgInfor="";
-	// 	imgInfor=files.img;
 		
 	// 	var name=parseInt( new Date()/100+Math.round( Math.random()*100));   //定义随机图片名称,防止粘贴上来的图片名称一样
 	// 	// 判断图片后缀名
 		
-	// 	switch(imgInfor.type){
-	// 		case "image/jpeg":
-	// 			name+=".jpg"
-	// 		break;
-	// 		case "image/jpg":
-	// 			name+=".jpg"
-	// 		break;
-	// 		case "image/png":
-	// 			name+=".png"
-	// 		break;
-	// 	}
-	// 	console.log(name);
-	// 	var read=fs.createReadStream(imgInfor.path);  //读取默认目录下的图片
-	// 	newPath='/uploadImg/'+name;   //创建保存图片的新的文件
-	// 	var write=fs.createWriteStream("public/"+newPath);   //写入路径
-	// 	read.pipe(write); 
-	// 	// 写入完成
-	// 	write.on('close',function (err) { 
-	// 		if(err){
-	// 			throw err;
-	// 		}else{
-	// 			res.json({
-	// 				"errno ":0,
-	// 				"data":[
-	// 					newPath
-	// 				]
-	// 			})
-	// 		}
-	// 	 })
-	// })
-	
 })
+
 //增: 往数据库存储后台页面发布的文章信息
 router.post('/getAdd',function(req,res){
-	
-	let enity=new model();  
-	enity.title=req.body.title;
-	enity.content=req.body.content;
-	enity.kind=req.body.kind;
-	enity.date=req.body.date;
-	if(req.body.writer!==""){ 	//  如果发布时没输入作者名称则使用数据库默认指定的值
-		enity.writer=req.body.writer
-	}
-	enity.save(function(err){
-		if(err){
-			res.send("0")
-		}else{
-			res.send("1");
+		let temp="E:/vue+express/myapp/public/temp/";   //本地临时文件夹
+		let imgArr=[];
+		// 功能:
+		// 		前端点击发表按钮，后端先去临时文件夹读取所有图片，并将图片读取到新的文件夹中，再将临时文件夹清空
+		// 过程:
+		// 		1.fs.readdir(路径，callback(err,files))   //先读取 临时文件夹 下的所有文件,参数files是一个数组，包括文件夹下的所有文件
+		//      2.fs.createReadStream(路径名+文件名)   遍历临时文件夹的所有文件，创建读取流读取文件内容。
+		//      3.创建新的文件夹用来保存读取的文件内容；
+		//      4.fs.createWriteStream(路径)   写入到的新路径；
+		//      5.创建管道流 开始执行上述步骤  fs.createReadStream.pipe(fs.createWriteStream)
+		//      6.写入完成后用 fs.unlink(临时路径) 删除临时文件夹下的所有内容
+		fs.readdir(temp,function(err,files){
+			if(err){
+				throw err;
+			}else{
+				// files:[]
+				for(let i in files){
+					imgArr.push(files[i])
+					var read=fs.createReadStream(temp+files[i]);  //读取默认目录下的图片
+					var newPath='/uploadImg/'+files[i];   //创建保存图片的新的文件路径
+					var write=fs.createWriteStream("public/"+newPath);   //设置新的路径
+					read.pipe(write); 
+					// 写入完成后执行
+					write.on('close',function (err) { 
+						if(err){
+							throw err;
+						}else{
+							// 清空临时文件夹
+							fs.unlink(temp+files[i],function(err){
+								if(err) throw err;
+								console.log("删除成功")
+							})
+						}
+					 })
+				}
+			}
+		})
+		
+		// 功能:前端点击发表，将提交的标题、分类、内容、作者保存到数据库;
+		// 过程:
+		//     1.实例化数据库的实体new model()，用来对数据库进行增删改查
+		//     2.将上传的内容中\temp\字段改为\uploadImg\；因为图片临时文件夹已清空,图片已被写入uploadImg文件夹下
+		//     3.enity.save监听数据写入是否成功,失败返回0，成功返回1
+		let enity=new model();  
+		enity.title=req.body.title;
+		var content=req.body.content;
+		content=content.replace(/\\temp\\/g,"\\uploadImg\\");   //替换掉图片临时路径，改为数据库图片路径
+		enity.content=content;
+		enity.kind=req.body.kind;
+		enity.date=req.body.date;
+		if(req.body.writer!==""){ 	//  如果发布时没输入作者名称则使用数据库默认指定的值
+			enity.writer=req.body.writer;
 		}
-	});
-	
+		enity.save(function(err){
+			if(err){
+				res.send("0")
+			}else{
+				res.send("1");
+			}
+		});
+
+		
+		
 })
 
 
