@@ -23,6 +23,7 @@ router.all('*', function(req, res, next) {
 
 
 var imgNumber=0;
+
 // 接收图片
 router.post('/getImg',function(req,res){
 	
@@ -148,7 +149,6 @@ router.get("/editData",function(req,res,next){
 // 匹配模式，点击每个导航获取对应值
 router.post('/type/:id',function(req,res){
 	let typeId=req.params.id;
-	console.log(typeId);
 	let jsonData={};
 	model.find({"kind":typeId},function(err,data){
 		if(err) throw err;
@@ -182,45 +182,86 @@ router.get('/alter',function(req,res){
 // 删:后台页面删除文章
 	// 根据提交的文章id查找到对应文章进行删除
 	// 根据提交的文章id去评论表查找到对应评论进行删除
+
 // router.get('/del',function(req,res){
 // 	let id=req.query.id;
+// 	// 删除文章
 // 	model.remove({"_id":id},function(err){
 // 		if(err) throw err;
-// 		// 根据id查找到评论集合里的文章进行删除
+// 		// 根据标题id查找到评论集合里的评论进行删除
 // 		cmtModel.remove({"titleId":id},function(err,data){
-// 			if(err) throw err;
-// 			// res.send('1');
+// 			if(err){
+// 				throw err
+// 			}else{
+// 				replyModel.remove({"titleId":id},function(err,data){
+// 					if(err) throw err;
+					
+// 					res.send("1")
+// 				})
+// 			}
+			
 // 		})
-		
+
 // 	})
-	
 // })
 
 
 router.get('/del',function(req,res){
 	let id=req.query.id;
 	// 删除文章
-	model.remove({"_id":id},function(err){
-		if(err) throw err;
-		// 根据标题id查找到评论集合里的评论进行删除
-		cmtModel.remove({"titleId":id},function(err,data){
-			if(err){
-				throw err
-			}else{
-				replyModel.remove({"titleId":id},function(err,data){
-					if(err) throw err;
-					
-					res.send("1")
-				})
-			}
-			
-		})
-
-		
-
-	})
+	function articleRemove(id){
 	
+		let selectId=new Promise((resolve,reject)=>{
+			model.deleteOne({"_id":id},function(err){
+				if(err){
+					reject("删除文章失败")
+				}else{
+					resolve(id)
+				}
+			})
+		})
+		return selectId;
+	}
+	// 删除评论
+	function cmtRemove(id){
+		let cmtRemove=new Promise((resolve,reject)=>{
+			cmtModel.deleteOne({"titleId":id},function(err,data){
+				if(err){
+					reject("删除评论失败")
+				}else{
+					resolve(id)
+				}
+			})
+		})
+		return cmtRemove;
+	}
+	// 删除回复
+	function replyMove(id){
+		let replyMove=new Promise((resolve,reject)=>{
+			replyModel.deleteOne({"titleId":id},function(err,data){
+				if(err){
+					reject("删除回复失败")
+				}else{
+					res.send("1")
+				}
+			})
+		})
+		return replyMove;
+	}
+
+	articleRemove(id)
+	.then((res)=>{
+		return cmtRemove(res);
+	})
+	.then((res)=>{
+		return replyMove(res);
+	})
+	.catch((err)=>{
+		console.log(err)
+		res.send("0")
+	})
 })
+
 
 
 module.exports=router;
