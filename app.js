@@ -14,7 +14,8 @@ var reply=require('./routes/manage/aboutwz/reply');  //后台回复的评论
 var pandect=require('./routes/manage/pandect/pandect');  //后台-总览
 
 var app = express();
-app.use(history());
+
+app.use(history());// 解决刷新报404问题
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');

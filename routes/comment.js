@@ -31,10 +31,26 @@ router.get("/pl",function(req,res){
 })
 
 // 获取评论
-router.get("/getpl",function(req,res){
-    cmdModel.find({},function(err,data){
-        if(err) throw err;
-        res.send(data);
+router.get("/getpl/:page/:totle",function(req,res){
+    let page=req.params.page;   //前端传递的当前显示的第几页
+	let totle=req.params.totle;  //每页显示多少条数据
+    let pageData;
+	// @row :一共有多少条文章
+	// @totlePages：总共有几页      总页数=所有文章数量/每页显示的数据
+	// @data:要显示的数据
+    cmdModel.find({},function(err,doc){
+        if(err){
+            res.json({
+                data:"0"
+            })
+        }else{
+            pageData=doc.slice( (page-1)*totle,page*totle );
+            res.json({
+                data:pageData,
+                row:doc.length,
+                totlePages:Math.ceil(doc.length/totle)
+            });
+        }
     })
 })
 

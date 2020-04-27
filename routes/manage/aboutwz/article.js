@@ -43,7 +43,7 @@ router.post('/getImg',function(req,res){
 		imgInfor=files.img;
 		// 将图片的临时文件路径返回给前端
 		res.json({
-			"errno ":0,
+			"errno":0,
 			"data":[
 				imgInfor.path     // public\temp\图片名.jpg
 			]
@@ -51,7 +51,7 @@ router.post('/getImg',function(req,res){
 	})
 		
 	// 	var name=parseInt( new Date()/100+Math.round( Math.random()*100));   //定义随机图片名称,防止粘贴上来的图片名称一样
-	// 	// 判断图片后缀名
+
 		
 })
 
@@ -70,7 +70,8 @@ router.post('/getAdd',function(req,res){
 		//      6.写入完成后用 fs.unlink(临时路径) 删除临时文件夹下的所有内容
 		fs.readdir(temp,function(err,files){
 			if(err){
-				throw err;
+				res.send("0");
+				return false;
 			}else{
 				// files:[]
 				for(let i in files){
@@ -122,8 +123,6 @@ router.post('/getAdd',function(req,res){
 		
 })
 
-
-//查: 后台页面点击查看文章,后端返回所有的文章信息
 //    前端侧边栏热门文章
 router.get('/look',function(req,res){
 	model.find({},function(err,data){
@@ -131,7 +130,6 @@ router.get('/look',function(req,res){
 		res.send(data);
 	})
 })
-
 // 获取要进行编辑的数据
 router.get("/editData",function(req,res,next){
     var getId=req.query.id;    //获取前端发送的文章id
@@ -141,17 +139,47 @@ router.get("/editData",function(req,res,next){
             throw err;
         }else{
 			res.send(data);
-			
 		}
     })
 })
+
+//查: 后台页面点击查看文章,后端返回所有的文章信息
+//    前端侧边栏热门文章
+//    刚进入主页时调用
+//    点击分页时获取数据
+router.get('/article/:page/:totle',function(req,res){
+	let page=req.params.page;   //前端传递的当前显示的第几页
+	let totle=req.params.totle;  //每页显示多少条数据
+	let pageData;
+	// @row :一共有多少条文章
+	// @totlePages：总共有几页      总页数=所有文章数量/每页显示的数据
+	// @data:要显示的数据
+	model.find({},function(err,doc){
+		if(err){
+			res.send("0")
+		};
+		// 设置显示多少条数据  
+		pageData=doc.slice( (page-1)*totle,page*totle );
+		
+		res.json({
+			data:pageData,
+			row:doc.length,
+			totlePages:Math.ceil(doc.length/totle)
+		});
+	})
+})
+
+
+
 
 // 匹配模式，点击每个导航获取对应值
 router.post('/type/:id',function(req,res){
 	let typeId=req.params.id;
 	let jsonData={};
 	model.find({"kind":typeId},function(err,data){
-		if(err) throw err;
+		if(err){
+			res.send("0");
+		};
 		res.send(data);
 	   
 		// res.json(data);
@@ -174,7 +202,9 @@ router.get('/alter',function(req,res){
 			"date":req.query.date
 		}
 	},function(err,data){
-		if(err) throw err;
+		if(err){
+			res.send("0");
+		};
 		res.send("1");
 	})
 })
@@ -182,29 +212,6 @@ router.get('/alter',function(req,res){
 // 删:后台页面删除文章
 	// 根据提交的文章id查找到对应文章进行删除
 	// 根据提交的文章id去评论表查找到对应评论进行删除
-
-// router.get('/del',function(req,res){
-// 	let id=req.query.id;
-// 	// 删除文章
-// 	model.remove({"_id":id},function(err){
-// 		if(err) throw err;
-// 		// 根据标题id查找到评论集合里的评论进行删除
-// 		cmtModel.remove({"titleId":id},function(err,data){
-// 			if(err){
-// 				throw err
-// 			}else{
-// 				replyModel.remove({"titleId":id},function(err,data){
-// 					if(err) throw err;
-					
-// 					res.send("1")
-// 				})
-// 			}
-			
-// 		})
-
-// 	})
-// })
-
 
 router.get('/del',function(req,res){
 	let id=req.query.id;

@@ -63,25 +63,42 @@ router.get("/isShow",function(req,res){
 //     } );
 // })
 
-router.get("/replyPl",function(req,res){
+router.get("/replyPl/:page/:totle",function(req,res){
     let replyBox=[];
-    cmdModel.find( {"reply":true},function(err,data){
+    let page=req.params.page;   //前端传递的当前显示的第几页
+	let totle=req.params.totle;  //每页显示多少条数据
+	let pageData;
+    cmdModel.find( {"reply":true},function(err,doc){
         
-        if(err) throw err;
-        if(data.length>0){
-            for(let i in data){
-                replyModel.find({"commentId":data[i]._id},function(err,result){
-                    if(err) throw err;
-                    if(result.length>0){
-                        data[i].replyMsg=result[0].content;
-                        data[i].replyTime=result[0].replyTime;
-                        if( data.length==parseInt(i)+1 ){
-                            res.send(data);
+        if(err){
+            res.json({
+                data:"0"
+            })
+        }else if(doc.length>0){
+            for(let i in doc){
+                replyModel.find({"commentId":doc[i]._id},function(err,result){
+                    if(err){
+                        res.json({
+                            data:"0"
+                        })
+                    }else if(result.length>0){
+                        doc[i].replyMsg=result[0].content;
+                        doc[i].replyTime=result[0].replyTime;
+                        if(doc.length==parseInt(i)+1 ){
+                            pageData=result.slice( (page-1)*totle,page*totle );
+                            res.json({
+                                data:doc,
+                                row:doc.length,
+                                totlePages:Math.ceil(doc.length/totle)
+                            });
+                           
                         }
                     }
+                    
                 })
             }
-        }else{
+        }
+        else{
             res.send("0");
         }
         
@@ -89,10 +106,25 @@ router.get("/replyPl",function(req,res){
 })
 
 
-router.get("/noReply",function(req,res){
+router.get("/noReply/:page/:totle",function(req,res){
     let replyBox=[];
-    cmdModel.find( {"reply":false},function(err,data){
-        res.send(data)
+    let page=req.params.page;   //前端传递的当前显示的第几页
+	let totle=req.params.totle;  //每页显示多少条数据
+	let pageData;
+    cmdModel.find( {"reply":false},function(err,doc){
+        if(err){
+			res.json({
+                data:"0"
+            })
+		};
+		// 设置显示多少条数据  
+		pageData=doc.slice( (page-1)*totle,page*totle );
+		
+		res.json({
+			data:pageData,
+			row:doc.length,
+			totlePages:Math.ceil(doc.length/totle)
+		});
     } );
 })
 module.exports=router;

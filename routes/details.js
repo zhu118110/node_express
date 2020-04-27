@@ -63,11 +63,28 @@ router.get("/details",function(req,res,next){
 })
 
 //   刚进入详情页时获取到关于此文章的评论
-router.get('/comments',function(req,res){
-    let titleId=req.query.titleId;  
-    model.find({"titleId":titleId},function(err,data){
-        if(err) throw err;
-        res.send(data);
+router.get('/comments/:titleId/:page/:totle',function(req,res){
+    let titleId=req.params.titleId;
+    let page=req.params.page;   //前端传递的当前显示的第几页
+	let totle=req.params.totle;  //每页显示多少条数据
+    let pageData;
+	// @row :一共有多少条文章
+	// @totlePages：总共有几页      总页数=所有文章数量/每页显示的数据
+	// @data:要显示的数据
+    model.find({"titleId":titleId},function(err,doc){
+        if(err){
+            res.json({
+                data:"0"
+            })
+        }else{
+            pageData=doc.slice( (page-1)*totle,page*totle );
+            res.json({
+                data:pageData,
+                row:doc.length,
+                totlePages:Math.ceil(doc.length/totle)
+            });
+        }
+        
     })
 })
 
