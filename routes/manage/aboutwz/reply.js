@@ -15,22 +15,37 @@ router.all('*', function(req, res, next) {
 
 // 获取到回复的内容放到reply数据库
 
-router.get("/getReply",function(req,res){
-    let replyMsg=req.query;
-    let enity=new replyModel({
-        titleId:replyMsg.titleId,  //标题id
-        content:replyMsg.replyMsg,  //回复内容
-        commentId:replyMsg.commentId,  //评论id
-        replyTime:replyMsg.dateStr,  //回复时间
-        writer:replyMsg.writer,  //作者
-    })
+router.post("/getReply",function(req,res){
+    let replyMsg=req.body;
     
+    let enity=new replyModel({
+        isReply:replyMsg.isReply, 
+        cmtContent:replyMsg.cmtContent,   //评论的内容
+        cmtDate:replyMsg.cmtDate,    //评论的时间
+        title:replyMsg.title,  
+        titleId:replyMsg.titleId,  //标题id
+        replyContent:replyMsg.replyMsg,  //回复内容
+        commentId:replyMsg.commentId,  //评论id
+        replyTime:replyMsg.replyDate,  //回复时间
+        writer:replyMsg.writer,  //作者
+        kind:replyMsg.kind
+    })
+   
     enity.save(function(err){
         if(err) throw err;
         // 根据评论Id改变回复状态, 
         cmdModel.findByIdAndUpdate(enity.commentId,{$set:{"reply":true}},function(err,data){
-            if(err) throw err;
-            res.send("1");
+            if(err){
+                res.json({
+                    statu:"error",
+                    data:[]
+                });
+            }else{
+                res.json({
+                    statu:"success",
+                    data:[]
+                });
+            }
         })
         
     })
@@ -51,80 +66,120 @@ router.get("/isShow",function(req,res){
     
 })
 
-
-
-// 功能: 在评论表里查找已经回复过的评论,查找条件是 "reply"=true ;
-// 变量: 无;
-// 思路: 前端请求这个接口时,去评论表中查找符合条件是 "reply"=true 的字段得到data,并将data返回给前端,返回的是一个数组;
-// router.get("/replyPl",function(req,res){
-//     cmdModel.find( {"reply":true},function(err,data){
-//         if(err) throw err;
-//         res.send(data);
-//     } );
-// })
-
+// 进入已回复页面获取已回复过的评论
+// 先在评论表里根据reply=true字段找到所有被回复过的评论，
+// 然后根据回复过的评论id去回复表里查找对应的内容
 router.get("/replyPl/:page/:totle",function(req,res){
-    let replyBox=[];
     let page=req.params.page;   //前端传递的当前显示的第几页
-	let totle=req.params.totle;  //每页显示多少条数据
-	let pageData;
-    cmdModel.find( {"reply":true},function(err,doc){
-        
-        if(err){
-            res.json({
-                data:"0"
-            })
-        }else if(doc.length>0){
-            for(let i in doc){
-                replyModel.find({"commentId":doc[i]._id},function(err,result){
-                    if(err){
-                        res.json({
-                            data:"0"
-                        })
-                    }else if(result.length>0){
-                        doc[i].replyMsg=result[0].content;
-                        doc[i].replyTime=result[0].replyTime;
-                        if(doc.length==parseInt(i)+1 ){
-                            pageData=result.slice( (page-1)*totle,page*totle );
-                            res.json({
-                                data:doc,
-                                row:doc.length,
-                                totlePages:Math.ceil(doc.length/totle)
-                            });
-                           
-                        }
-                    }
+    let totle=req.params.totle;  //每页显示多少条数据
+    let pageData;
+
+    function selectCmd(){
+        let cmd=new Promise((resolve,reject)=>{
+            // 根据字段查找已经被回复过的评论
+            cmdModel.find({"reply":true},function(err,cmdData){
+                if(err){
+                    reject("评论表查找失败")
                     
-                })
-            }
-        }
-        else{
-            res.send("0");
-        }
-        
-    } );
+                }else{
+                    if(cmdData.length<=0){
+                        res.json({
+                            statu:"success",
+                            data:[],
+                            row:1,
+                            totlePages:totle,
+                        })
+                        return false
+                    }else{
+                        console.log("我是评论字段"+cmdData)
+                        resolve(cmdData)
+                    }
+                   
+                }
+            })
+        })
+        return cmd;
+    }
+    
+    function selectReply(cmdId){
+        let resultBox=[];
+        cmdId.forEach((val,i,cmdId)=>{
+            // 根据评论的id去回复表里查找内容
+            replyModel.find({"commentId":val._id},function(err,result){
+                if(err){
+                    res.json({
+                        statu:"error",
+                    })
+                }else if(result.length>0){
+                    resultBox=resultBox.concat(result)
+                   
+                   if(Number(i)+1==cmdId.length){
+                        pageData=resultBox.slice( (page-1)*totle,page*totle);
+                        res.json({
+                            statu:"success",
+                            data:pageData,
+                            row:resultBox.length,
+                            totlePages:Math.ceil(resultBox.length/totle)
+                        })
+                   } 
+                }else{
+                    res.json({
+                        statu:"success",
+                        data:[],
+                        row:1,
+                        totlePages:totle
+                    })
+                }
+            })
+        })
+       
+    }
+
+    selectCmd()
+    .then(data=>{
+        return selectReply(data)
+    })
+    .catch(err=>{
+        res.json({
+            statu:"error",
+
+        })
+    })
+
+  
 })
 
 
+
+
+
+// 获取没有回复过的评论
 router.get("/noReply/:page/:totle",function(req,res){
     let replyBox=[];
     let page=req.params.page;   //前端传递的当前显示的第几页
 	let totle=req.params.totle;  //每页显示多少条数据
 	let pageData;
-    cmdModel.find( {"reply":false},function(err,doc){
+    // 根据字段查找已经被回复过的评论
+    cmdModel.find({"reply":false},function(err,cmdData){
         if(err){
-			res.json({
-                data:"0"
+            res.json({
+                statu:"error"
             })
-		};
-		// 设置显示多少条数据  
-		pageData=doc.slice( (page-1)*totle,page*totle );
-		
-		res.json({
-			data:pageData,
-			row:doc.length,
-			totlePages:Math.ceil(doc.length/totle)
-		});
-    } );
+            
+        }else{
+            pageData=cmdData.slice( (page-1)*totle,page*totle );
+            res.json({
+                statu:"success",
+                data:cmdData,
+                row:cmdData.length,
+                totlePages:pageData
+            })
+        }
+    })
+       
+    
+   
+
+    
 })
 module.exports=router;

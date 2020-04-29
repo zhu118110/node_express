@@ -41,11 +41,12 @@ router.get("/getpl/:page/:totle",function(req,res){
     cmdModel.find({},function(err,doc){
         if(err){
             res.json({
-                data:"0"
+                statu:"error",
             })
         }else{
             pageData=doc.slice( (page-1)*totle,page*totle );
             res.json({
+                statu:"success",
                 data:pageData,
                 row:doc.length,
                 totlePages:Math.ceil(doc.length/totle)
@@ -60,75 +61,78 @@ router.get("/getpl/:page/:totle",function(req,res){
 // 变量:
     //@  idArr 接收前端发送的选中的评论的id,类型是数组,
     //@  scss  存放删除成功后返回的对象信息,类型是数组
-// 思路:
-    // 1.先判断前端是否发送了至少一条数据;    idArr.length>0
-    // 2.遍历 idArr ,根据id去评论库查找对应的内容data,它是一个数组
-    // 3.遍历 data ,进行删除,删除成功后返回的对象放到 scss 数组中
-    // 4.比较 scss 和 idArr 数组的长度,如果长度相同则表示全部删除,给前端返回状态码1;
-router.get("/delpl",function(req,res){
-    
-    let idArr=req.query.idArr;
-    let cmdData=[];  //评论的数据
 
-    for(var i=0;i<idArr.length;i++){
-        cmdModel.findByIdAndRemove({"_id":idArr[i]},function(err,data){
-            if(err){
-                throw err
-            }else{
-                // 保存删除的评论
-                cmdData.push(data);
-                // 如果已经删除掉的评论数量==选中的评论数量,给前端返回1
-                if(cmdData.length==idArr.length){
-                   return res.send("1");
-                }      
-            }
-        })
-    }
-})
-
-// 删除回复
-router.get("/delhf",function(req,res){
-    let idArr=req.query.idArr;
-    let replyData=[];  //回复的数据
-    let dataLength=0;
-    let flag=false;
-    (async function(){
-        await new Promise((resolve, reject) => {
-
-            for(let i in idArr){
-                replyModel.find({"commentId":idArr[i]},function(err,data){
-                    
-                    if(data.length>0){
-                        dataLength+=data.length;
-                        if(err){
-                            throw err;
-                        }else{
-                            for(let j in data){
-                                data[j].remove(function(err,success){
-                                    replyData.push(success);
-                                    if(dataLength==replyData.length){
-                                    res.send("1");
-                                    }
-                                })
-                            }
-                            
-                        }
+router.post("/delpl",function(req,res){
+    // 接收前端发送的id，它是个json，先解码
+    let idArr=JSON.parse(req.body.idArr);
+    var ok=0;
+    // 根据请求的id，去评论表里通过id查找到字段进行删除
+    function removeComent(ids){
+      
+        let removeComt=new Promise((resolve,reject)=>{
+            ids.forEach((val,i,arr)=>{
+              
+                cmdModel.remove({"_id":val},function(err,data){
+                    if(err){
+                        reject("评论表字段查找失败"+err)
                     }else{
-                        
-                        resolve(flag=true)
-                        // console.log('1', flag);
-                       
+                        ok+=Number(data.ok);
+                        if(ok==Number(i)){
+                            resolve(arr);
+                        }
                     }
                 })
-            }
             })
-            // console.log('2', flag);
-            if(flag==true){
-                res.send("0");
-            }
-        
-    })()
+        })
+        return removeComt;
+    }
+
+    // 回复表里根据请求的评论的id进行删除
+    function removeReply(ids){
+        let removeReply=new Promise((resolve,reject)=>{
+            ids.forEach((val,i,arr)=>{
+                // 先根据评论id找到对应的回复的字段
+                replyModel.find({"commentId":val},function(err,data){
+                   data.forEach((removeVal,removeI,removeData)=>{
+                        //删除对应的回复的字段    
+                        removeVal.remove((err,removeData)=>{
+                            if(data.lenth==removeData.length){
+                                resolve(1);
+                            }
+                        })
+                   })
+                })
+            })
+        })
+        return removeReply;
+    }
+
+    removeComent(idArr)
+    .then(data=>{
+        return removeReply(data);
+    })
+    .then(data=>{
+       if(data){
+           res.json({
+               statu:"success",
+           })
+       }
+    })
+    .catch(err=>{
+        res.json({
+            statu:"error"+err,
+            
+        })
+    })
+
 })
+
+
+
+
+
+
+
 
 
 module.exports=router;

@@ -17,6 +17,7 @@ router.all('*', function(req, res, next) {
 // 验证账号密码
 router.post('/login',function(req,res){
 	var post=req.body;    //获取前端通过post方式传过来的账号、密码
+	
 	login.find({},function(err,data){
 		if(err){
 			router.direct("/")
